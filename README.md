@@ -49,3 +49,5 @@ Future Improvements
 Final Thoughts
 
 This project was a good hands-on experience in building a real-world web app. It helped me understand how different parts of frontend development come together.# MovieFinder-Wap-Project
+
+
