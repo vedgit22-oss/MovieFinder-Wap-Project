@@ -1,265 +1,70 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-    <title>My Simple Movie Watchlist</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
-            margin: 20px;
-        }
-
-        h1 {
-            color: blue;
-        }
-
-        .container {
-            display: flex;
-        }
-
-        .main-content {
-            width: 60%;
-            padding: 10px;
-        }
-
-        .watchlist-section {
-            width: 35%;
-            background-color: white;
-            padding: 10px;
-            border: 1px solid black;
-            margin-left: 20px;
-            height: fit-content;
-        }
-
-        .movie-card {
-            background-color: white;
-            border: 1px solid gray;
-            padding: 10px;
-            margin-bottom: 10px;
-        }
-
-        .movie-card img {
-            max-width: 100px;
-            display: block;
-            margin-top: 5px;
-            margin-bottom: 5px;
-        }
-
-        .watchlist-item {
-            border-bottom: 1px solid lightgray;
-            padding: 5px 0;
-            margin-bottom: 5px;
-        }
-
-        /* Dark mode styles */
-        body {
-            transition: background-color 0.3s, color 0.3s;
-        }
-        body.dark-mode {
-            background-color: #1a1a1a;
-            color: #ffffff;
-        }
-        body.dark-mode h1, body.dark-mode h2 {
-            color: #66b3ff;
-        }
-        body.dark-mode .watchlist-section, body.dark-mode .movie-card {
-            background-color: #333333;
-            border-color: #555555;
-            color: #ffffff;
-        }
-        body.dark-mode .watchlist-item {
-            border-bottom-color: #555555;
-        }
-        body.dark-mode #controlsDiv {
-            background-color: #444444 !important;
-        }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CineWatch | Your Personal Movie Watchlist</title>
+    <meta name="description" content="Discover movies and build your personal watchlist with CineWatch. Explore the latest films and keep track of what to watch next.">
+    <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h1>Find Movies</h1>
-        <button onclick="toggleTheme()" style="height: 30px; cursor: pointer;">Toggle Dark Mode</button>
-    </div>
-
-    <div class="container">
-        <div class="main-content">
-            <div style="margin-bottom: 15px;">
-                <input type="text" id="searchInput" placeholder="Search for a movie...">
-                <button onclick="searchMovies()">Search</button>
+    <div class="app-wrapper">
+        <header>
+            <h1>CineWatch</h1>
+            <div class="header-actions">
+                <!-- Theme toggle kept for future expansion -->
+                <button class="theme-btn" onclick="toggleTheme()" style="display:none;">🌓</button>
             </div>
+        </header>
 
-            <div style="margin-bottom: 15px; padding: 10px; background-color: #e0e0e0; border-radius: 5px;" id="controlsDiv">
-                <label for="sortOption">Sort: </label>
-                <select id="sortOption" onchange="applyFeatures()">
-                    <option value="default">Default</option>
-                    <option value="yearDesc">Newest to Oldest</option>
-                    <option value="alphaAsc">Alphabetical (A-Z)</option>
-                </select>
+        <div class="container">
+            <main class="main-content">
+                <section class="search-section">
+                    <div class="search-bar">
+                        <input type="text" id="searchInput" placeholder="Search for a movie title...">
+                        <button onclick="searchMovies()">Search</button>
+                    </div>
+                </section>
+
+                <section class="filters-section">
+                    <div class="filter-group">
+                        <label for="sortOption">Sort</label>
+                        <select id="sortOption" onchange="applyFeatures()">
+                            <option value="default">Release Date</option>
+                            <option value="yearDesc">Newest First</option>
+                            <option value="alphaAsc">Title (A-Z)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="filterOption">Filter</label>
+                        <select id="filterOption" onchange="applyFeatures()">
+                            <option value="all">All Results</option>
+                            <option value="hasPoster">With Posters Only</option>
+                        </select>
+                    </div>
+                </section>
+
+                <div id="loadingMsg" style="display:none;">
+                    <div class="loader">Searching the archives...</div>
+                </div>
                 
-                <label for="filterOption" style="margin-left: 15px;">Filter: </label>
-                <select id="filterOption" onchange="applyFeatures()">
-                    <option value="all">All Movies</option>
-                    <option value="hasPoster">Only with Posters</option>
-                </select>
-            </div>
+                <div id="errorMsg" style="display:none;"></div>
 
-            <p id="loadingMsg" style="display:none;">Loading...</p>
-            <p id="errorMsg" style="display:none; color: red;">No movies found</p>
+                <div id="resultsDiv">
+                    <!-- Movie cards will appear here -->
+                </div>
+            </main>
 
-            <div id="resultsDiv"></div>
-        </div>
-
-        <div class="watchlist-section">
-            <h2>My Watchlist</h2>
-            <div id="watchlistDiv">
-                <p>No movies in watchlist yet.</p>
-            </div>
+            <aside class="watchlist-section">
+                <h2>My Watchlist</h2>
+                <div id="watchlistDiv">
+                    <p style="color: var(--text-secondary);">No movies in watchlist yet.</p>
+                </div>
+            </aside>
         </div>
     </div>
 
-    <script>
-        var watchlist = [];
-        var apiKey = "a5b1d883";
-        var currentMovies = []; // Global array to store current search results
-
-        function toggleTheme() {
-            document.body.classList.toggle("dark-mode");
-        }
-
-        function searchMovies() {
-            var searchBox = document.getElementById("searchInput");
-            var keyword = searchBox.value;
-
-            var loading = document.getElementById("loadingMsg");
-            var error = document.getElementById("errorMsg");
-            var results = document.getElementById("resultsDiv");
-
-            loading.style.display = "block";
-            error.style.display = "none";
-            results.innerHTML = "";
-            currentMovies = [];
-
-            var url = "https://www.omdbapi.com/?apikey=" + apiKey + "&s=" + keyword;
-
-            fetch(url)
-                .then(function (response) {
-                    return response.json();
-                })
-                .then(function (data) {
-                    loading.style.display = "none";
-
-                    if (data.Response == "True") {
-                        currentMovies = data.Search;
-                        applyFeatures();
-                    } else {
-                        error.innerText = data.Error || "No movies found";
-                        error.style.display = "block";
-                    }
-                })
-                .catch(function (error) {
-                    loading.style.display = "none";
-                    console.log("Error finding movies");
-                    alert("Something went wrong with the search.");
-                });
-        }
-
-        function applyFeatures() {
-            var sortVal = document.getElementById("sortOption").value;
-            var filterVal = document.getElementById("filterOption").value;
-            
-            // 1. FILTERING (using Array.prototype.filter)
-            var processedMovies = currentMovies.filter(function(movie) {
-                if (filterVal === "hasPoster") {
-                    return movie.Poster !== "N/A";
-                }
-                return true; // "all"
-            });
-            
-            // 2. SORTING (using Array.prototype.sort)
-            processedMovies.sort(function(a, b) {
-                if (sortVal === "yearDesc") {
-                    return parseInt(b.Year) - parseInt(a.Year);
-                } else if (sortVal === "alphaAsc") {
-                    return a.Title.localeCompare(b.Title);
-                }
-                return 0; // "default"
-            });
-            
-            renderMovies(processedMovies);
-        }
-
-        function renderMovies(moviesArray) {
-            var results = document.getElementById("resultsDiv");
-            results.innerHTML = "";
-
-            // RENDERING (using Array.prototype.forEach instead of for-loop)
-            moviesArray.forEach(function(movie) {
-                var card = document.createElement("div");
-                card.className = "movie-card";
-
-                var title = document.createElement("h3");
-                title.innerHTML = movie.Title + " (" + movie.Year + ")";
-
-                var img = document.createElement("img");
-                if (movie.Poster != "N/A") {
-                    img.src = movie.Poster;
-                } else {
-                    img.alt = "No Image";
-                }
-
-                var button = document.createElement("button");
-                button.innerHTML = "Add to Watchlist";
-                button.setAttribute("data-title", movie.Title);
-
-                button.onclick = function () {
-                    var movieTitle = this.getAttribute("data-title");
-                    addToWatchlist(movieTitle);
-                };
-
-                card.appendChild(title);
-                card.appendChild(img);
-                card.appendChild(button);
-
-                results.appendChild(card);
-            });
-        }
-
-        function addToWatchlist(movieTitle) {
-            // Using Array.prototype.includes instead of for-loop
-            var alreadyInList = watchlist.includes(movieTitle);
-
-            if (alreadyInList == false) {
-                watchlist.push(movieTitle);
-                updateWatchlistUI();
-            } else {
-                alert("This movie is already in your watchlist!");
-            }
-        }
-
-        function updateWatchlistUI() {
-            var watchDiv = document.getElementById("watchlistDiv");
-            watchDiv.innerHTML = "";
-
-            if (watchlist.length == 0) {
-                watchDiv.innerHTML = "<p>No movies in watchlist yet.</p>";
-            } else {
-                var list = document.createElement("ul");
-
-                // Using Array.prototype.forEach instead of for-loop
-                watchlist.forEach(function(movieName) {
-                    var item = document.createElement("li");
-                    item.className = "watchlist-item";
-                    item.innerHTML = movieName;
-                    list.appendChild(item);
-                });
-
-                watchDiv.appendChild(list);
-            }
-        }
-    </script>
+    <script src="script.js"></script>
 </body>
-
 </html>
